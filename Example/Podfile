@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '8.0'
+
+target 'XJHMultiProxyKit_Example' do
+  pod 'XJHMultiProxyKit', :path => '../'
+
+  target 'XJHMultiProxyKit_Tests' do
+    inherit! :search_paths
+    
+    
+  end
+end
