@@ -12,9 +12,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 #define XJHProxy(Protocol) ((id<Protocol>)self.xjh_multiProxy)
 
+#define XJHProxyExceptFirst(Protocol) ((id<Protocol>)self.xjh_multiExceptFirstDelegateProxy)
+
+#define XJHProxyExceptLast(Protocol) ((id<Protocol>)self.xjh_multiExceptLastDelegateProxy)
+
 @interface NSObject (XJHMultiProxyAdditions)
 
+/// the proxy that contains every delegate
 @property (nonatomic, strong, readonly) XJHMultiProxy *xjh_multiProxy;
+
+/// the proxy that containes every delegate except the first delegate
+@property (nonatomic, strong, readonly) XJHMultiProxy *xjh_multiExceptFirstDelegateProxy;
+
+/// the proxy that containes every delegate except the last delegate
+@property (nonatomic, strong, readonly) XJHMultiProxy *xjh_multiExceptLastDelegateProxy;
 
 /// Add a delegate to the proxy
 /// @param delegate delegate object

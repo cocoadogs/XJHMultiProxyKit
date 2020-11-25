@@ -37,4 +37,26 @@
     }
 }
 
+- (XJHMultiProxy *)xjh_multiExceptFirstDelegateProxy {
+    @synchronized (self) {
+        XJHMultiProxy *proxy = objc_getAssociatedObject(self, @selector(xjh_multiExceptFirstDelegateProxy));
+        if (!proxy) {
+            proxy = self.xjh_multiProxy.allExceptFirstDelegate;
+            objc_setAssociatedObject(self, @selector(xjh_multiExceptFirstDelegateProxy), proxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+        return proxy;
+    }
+}
+
+- (XJHMultiProxy *)xjh_multiExceptLastDelegateProxy {
+    @synchronized (self) {
+        XJHMultiProxy *proxy = objc_getAssociatedObject(self, @selector(xjh_multiExceptLastDelegateProxy));
+        if (!proxy) {
+            proxy = self.xjh_multiProxy.allExceptLastDelegate;
+            objc_setAssociatedObject(self, @selector(xjh_multiExceptLastDelegateProxy), proxy, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+        return proxy;
+    }
+}
+
 @end

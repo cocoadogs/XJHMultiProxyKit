@@ -14,6 +14,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Create a instance when you add the multicast delegate funciton to your class
 + (XJHMultiProxy *)proxy;
 
+@property (nonatomic, weak, readonly) id lastDelegate;
+
+@property (nonatomic, weak, readonly) id firstDelegate;
+
+@property (nonatomic, assign, readonly) NSUInteger count;
+
 /// Add a delegate to the list
 /// @param delegate : delegate
 - (void)addDelegate:(id)delegate;
@@ -24,6 +30,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Remove all delegates from the list
 - (void)removeAllDelegates;
+
+/// delgate at index
+/// @param index index
+- (id)delegateAtIndex:(NSUInteger)index;
+
+- (XJHMultiProxy *)allExceptFirstDelegate;
+
+- (XJHMultiProxy *)allExceptLastDelegate;
 
 @end
 

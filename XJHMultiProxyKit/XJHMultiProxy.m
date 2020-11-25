@@ -8,7 +8,7 @@
 #import "XJHMultiProxy.h"
 
 @implementation XJHMultiProxy {
-    NSHashTable *_delegates;
+    NSPointerArray *_delegates;
     dispatch_semaphore_t _semaphore;
 }
 
@@ -16,7 +16,7 @@
     XJHMultiProxy *instance = [super alloc];
     if (instance) {
         instance->_semaphore = dispatch_semaphore_create(1);
-        instance->_delegates = [NSHashTable weakObjectsHashTable];
+        instance->_delegates = [NSPointerArray weakObjectsPointerArray];
     }
     return instance;
 }
@@ -27,22 +27,78 @@
     return [XJHMultiProxy alloc];
 }
 
+- (XJHMultiProxy *)allExceptFirstDelegate {
+    XJHMultiProxy *proxy = [XJHMultiProxy proxy];
+    if (_delegates.count > 1) {
+        dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+        NSPointerArray *mDelegates = _delegates.copy;
+        [mDelegates removePointerAtIndex:0];
+        [mDelegates compact];
+        dispatch_semaphore_signal(_semaphore);
+        proxy->_delegates = mDelegates;
+    } else {
+        proxy->_delegates = _delegates;
+    }
+    return proxy;
+}
+
+- (XJHMultiProxy *)allExceptLastDelegate {
+    XJHMultiProxy *proxy = [XJHMultiProxy proxy];
+    if (_delegates.count > 1) {
+        dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+        NSPointerArray *mDelegates = _delegates.copy;
+        [mDelegates removePointerAtIndex:_delegates.count-1];
+        [mDelegates compact];
+        dispatch_semaphore_signal(_semaphore);
+        proxy->_delegates = mDelegates;
+    } else {
+        proxy->_delegates = _delegates;
+    }
+    return proxy;
+}
+
 - (void)addDelegate:(id)delegate {
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    [_delegates addObject:delegate];
+    [_delegates addPointer:(__bridge void *)delegate];
+    [_delegates compact];
     dispatch_semaphore_signal(_semaphore);
 }
 
 - (void)removeDelete:(id)delegate {
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    [_delegates removeObject:delegate];
+    [_delegates removePointerAtIndex:[_delegates.allObjects indexOfObject:delegate]];
+    [_delegates compact];
     dispatch_semaphore_signal(_semaphore);
 }
 
 - (void)removeAllDelegates {
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    [_delegates removeAllObjects];
+    if (_delegates.count != 0) {
+        for (id obj in _delegates.allObjects) {
+            [_delegates removePointerAtIndex:[_delegates.allObjects indexOfObject:obj]];
+        }
+        [_delegates compact];
+    }
     dispatch_semaphore_signal(_semaphore);
+}
+
+- (id)delegateAtIndex:(NSUInteger)index {
+    if (index < _delegates.count) {
+        return _delegates.allObjects[index];
+    }
+    return nil;
+}
+
+- (id)lastDelegate {
+    return _delegates.count > 0 ? _delegates.allObjects.lastObject : nil;
+}
+
+- (id)firstDelegate {
+    return _delegates.count > 0 ? _delegates.allObjects.firstObject : nil;
+}
+
+- (NSUInteger)count {
+    return _delegates.count;
 }
 
 #pragma mark - Forward Methods
@@ -78,13 +134,18 @@
     }
 
     dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
-    NSHashTable *copyDelegates = [_delegates copy];
+
+    NSPointerArray *reversedDelegates = [NSPointerArray weakObjectsPointerArray];
+    for (id object in [[_delegates.allObjects reverseObjectEnumerator] allObjects]) {
+        [reversedDelegates addPointer:(__bridge void *)object];
+    }
+    
     dispatch_semaphore_signal(_semaphore);
 
     void *returnValue = NULL;
     SEL selector = invocation.selector;
 
-    for (id delegate in copyDelegates) {
+    for (id delegate in reversedDelegates) {
         if ([delegate respondsToSelector:selector]) {
             NSInvocation *dupInvocation = [self duplicateInvocation:invocation target:delegate];
             [dupInvocation invokeWithTarget:delegate];

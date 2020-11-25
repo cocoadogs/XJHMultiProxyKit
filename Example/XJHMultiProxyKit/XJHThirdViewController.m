@@ -25,6 +25,7 @@
 - (void)dealloc
 {
     NSLog(@"--- %@ dealloc ---", NSStringFromClass([self class]));
+    [_source xjh_removeAllDelegates];
 }
 
 - (void)viewDidLoad {
